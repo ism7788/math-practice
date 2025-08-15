@@ -1,0 +1,7 @@
+{
+  "count": 12,
+  "minSide": 2,
+  "maxSide": 12,
+  "withVisualAt": "medium+",
+  "mix": { "sides": 0.5, "angles": 0.5 }
+}

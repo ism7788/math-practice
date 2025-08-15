@@ -1,0 +1,64 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SCHOOL_MANAGER
+  SUBJECT_SUPERVISOR
+  SUBJECT_TEACHER
+  STUDENT
+}
+
+model User {
+  id            String             @id @default(cuid())
+  email         String             @unique
+  passwordHash  String
+  name          String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  memberships   SchoolMembership[]
+  createdSchools School[]          @relation("UserCreatedSchools")
+}
+
+model School {
+  id          String             @id @default(cuid())
+  name        String
+  /// A short join code students/teachers can use; must be unique system-wide.
+  code        String             @unique
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  // who created this school (usually an Admin)
+  createdById String?
+  createdBy   User?              @relation("UserCreatedSchools", fields: [createdById], references: [id])
+
+  memberships SchoolMembership[]
+}
+
+model SchoolMembership {
+  id         String   @id @default(cuid())
+  userId     String
+  schoolId   String
+  role       Role
+
+  // optional fields by role
+  gradeLevel Int?       // for students (e.g., 4, 5, 6...)
+  className  String?    // for students (e.g., "5-B")
+  subject    String?    // for teachers/supervisors (e.g., "Math")
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // MVP: one role per user per school
+  @@unique([userId, schoolId])
+}
